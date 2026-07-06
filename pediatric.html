@@ -45,8 +45,8 @@
         
         document.getElementById('case-summary').innerText = `เคส: ${diseaseName} | ประวัติแพ้ยา: ${allergies.length > 0 ? allergies.join(', ') : 'ไม่มี'}`;
 
-        // URL ดึงข้อมูลของคุณ
-        const API_URL = `https://script.google.com/macros/s/AKfycbyxvnsWIgcOp0gk0iIarnjdQOuJAynGyBpkYkZ3qAY9Lechs4dsD4nO_Ax92Yv6Nf1n/exec?disease=${diseaseId}`;
+
+        const API_URL = `https://script.google.com/macros/s/AKfycbyxvnsWIgcOp0gk0iIarnjdQOuJAynGyBpkYkZ3qAY9Lechs4dsD4nO_Ax92Yv6Nf1n/exec?disease=${diseaseId}&sheet=Ped Drugs`;
 
         fetch(API_URL)
             .then(response => response.json())
