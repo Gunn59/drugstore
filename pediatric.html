@@ -2,114 +2,413 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <title>ATB Selector - คำนวณโดสเด็ก</title>
-    <link rel="stylesheet" href="style.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FAST SCREENING: Peds Dose</title>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #0ea5e9;
+            --primary-light: #e0f2fe;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --danger: #ef4444;
+        }
+
+        html[data-theme="dark"] {
+            --primary: #38bdf8;
+            --primary-light: #0f172a;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --danger: #f87171;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Prompt', sans-serif; }
+        body { background-color: var(--bg-color); color: var(--text-main); line-height: 1.5; padding-bottom: 40px; transition: background-color 0.3s, color 0.3s; }
+        
+        /* Header */
+        .header { position: sticky; top: 0; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(8px); padding: 16px; z-index: 100; box-shadow: 0 1px 2px rgba(0,0,0,0.05); text-align: center; transition: background-color 0.3s; }
+        html[data-theme="dark"] .header { background: rgba(15, 23, 42, 0.95); box-shadow: 0 1px 2px rgba(255,255,255,0.05); }
+        .header h1 { font-size: 1.2rem; color: var(--primary); margin-bottom: 12px; font-weight: 600; margin-top: 4px; }
+        
+        .back-btn {
+            position: absolute; left: 16px; top: 16px; color: var(--primary); text-decoration: none; font-size: 0.85rem; font-weight: 500; display: flex; align-items: center; gap: 4px; background: var(--primary-light); padding: 4px 10px; border-radius: 8px; transition: 0.2s; border: 1px solid #bae6fd;
+        }
+        .back-btn:hover { background: #bae6fd; }
+        html[data-theme="dark"] .back-btn { border-color: #334155; }
+        html[data-theme="dark"] .back-btn:hover { background: #1e293b; }
+
+        .weight-input { display: inline-flex; align-items: center; gap: 10px; background: var(--primary-light); padding: 10px 16px; border-radius: 12px; }
+        .weight-input input { width: 90px; font-size: 1.5rem; font-weight: 600; text-align: center; padding: 4px; border: 2px solid #bae6fd; border-radius: 8px; outline: none; color: var(--primary); background: #fff; }
+        .weight-input input:focus { border-color: var(--primary); }
+        html[data-theme="dark"] .weight-input input { background: #1e293b; border-color: #334155; }
+        
+        /* Category Tabs */
+        .category-tabs {
+            display: flex; overflow-x: auto; gap: 12px; padding: 12px 20px; background: #ffffff; position: sticky; top: 105px; z-index: 99; border-bottom: 1px solid #e2e8f0; -webkit-overflow-scrolling: touch; transition: background-color 0.3s;
+        }
+        html[data-theme="dark"] .category-tabs { background: #1e293b; border-color: #334155; }
+        .category-tabs::-webkit-scrollbar { height: 4px; }
+        .category-tabs::-webkit-scrollbar-track { background: transparent; }
+        .category-tabs::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        
+        .tab-btn {
+            white-space: nowrap; padding: 8px 16px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 20px; font-size: 0.9rem; color: var(--text-muted); cursor: pointer; transition: 0.2s; font-weight: 500;
+        }
+        html[data-theme="dark"] .tab-btn { background: #0f172a; border-color: #334155; }
+        .tab-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); box-shadow: 0 4px 6px -1px rgba(14, 165, 233, 0.3); }
+
+        .container { max-width: 900px; margin: 0 auto; padding: 20px; }
+        
+        #loading { text-align: center; padding: 40px; color: var(--primary); font-weight: 500; font-size: 1.1rem; }
+        
+        .card-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+        @media (max-width: 600px) { .card-grid { grid-template-columns: 1fr; } }
+        
+        .drug-card { 
+            background: var(--card-bg); border-radius: 12px; padding: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; display: flex; flex-direction: column; transition: background-color 0.3s, border-color 0.3s;
+        }
+        html[data-theme="dark"] .drug-card { border-color: #334155; box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
+        
+        .d-header { display: flex; flex-direction: column; gap: 4px; margin-bottom: 8px; align-items: flex-start; }
+        .d-name { font-weight: 600; font-size: 1rem; color: var(--primary); line-height: 1.2; }
+        .d-age { font-size: 0.7rem; background: #f1f5f9; padding: 2px 6px; border-radius: 4px; color: var(--text-muted); }
+        html[data-theme="dark"] .d-age { background: #334155; color: #cbd5e1; }
+        .d-hint { font-size: 0.75rem; color: var(--text-muted); margin-bottom: 12px; white-space: pre-line; line-height: 1.4; }
+        
+        .controls { margin-bottom: 12px; display: flex; flex-direction: column; gap: 6px; }
+        select { padding: 4px 6px; border-radius: 6px; border: 1px solid #cbd5e1; font-size: 0.75rem; outline: none; background: #f8fafc; width: 100%; color: var(--text-main); }
+        html[data-theme="dark"] select { background: #0f172a; border-color: #475569; }
+        
+        .dose-config {
+            display: flex; align-items: center; justify-content: space-between; background: #f1f5f9; padding: 4px 8px; border-radius: 6px; border: 1px solid #cbd5e1; font-size: 0.75rem;
+        }
+        html[data-theme="dark"] .dose-config { background: #1e293b; border-color: #334155; }
+        .dose-config label { color: var(--text-muted); font-weight: 500; }
+        .dose-config input {
+            width: 55px; padding: 2px 4px; border-radius: 4px; border: 1px solid #94a3b8; text-align: center; font-size: 0.75rem; font-weight: 600; color: var(--primary); outline: none; background: #fff;
+        }
+        html[data-theme="dark"] .dose-config input { background: #0f172a; border-color: #475569; }
+        
+        .freq-group { display: flex; gap: 4px; flex-wrap: wrap; }
+        .freq-btn { flex: 1; padding: 4px; border: 1px solid #cbd5e1; background: #f8fafc; border-radius: 6px; font-size: 0.75rem; cursor: pointer; transition: 0.2s; white-space: nowrap; text-align: center; color: var(--text-main); }
+        html[data-theme="dark"] .freq-btn { background: #0f172a; border-color: #475569; }
+        .freq-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+        
+        .result-box { background: #f1f5f9; border-radius: 8px; padding: 12px 8px; text-align: center; margin-top: auto; }
+        html[data-theme="dark"] .result-box { background: #1e293b; border-color: #334155; }
+        .res-ml { font-size: 1.3rem; font-weight: 600; color: var(--primary); line-height: 1; }
+        .res-ml span { font-size: 0.85rem; font-weight: 400; }
+        .res-mg { font-size: 0.75rem; color: var(--text-muted); margin-top: 4px; }
+        .warning { font-size: 0.7rem; color: var(--danger); margin-top: 8px; font-weight: 500; line-height: 1.2; }
+        
+        .fixed-text { font-size: 0.75rem; color: var(--text-main); white-space: pre-line; text-align: left; background: #fff; padding: 10px; border-radius: 6px; border: 1px dashed #cbd5e1; height: 100%; }
+        html[data-theme="dark"] .fixed-text { background: #1e293b; border-color: #475569; }
+
+        .theme-toggle-btn {
+            position: fixed; bottom: 24px; right: 24px; width: 50px; height: 50px; border-radius: 50%; background: var(--primary); color: #ffffff; border: none; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25); cursor: pointer; z-index: 999; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; transition: transform 0.2s, background-color 0.3s;
+        }
+        .theme-toggle-btn:hover { transform: scale(1.1); }
+    </style>
 </head>
 <body>
-    <div class="header-navigation">
-        <a href="population.html" class="back-btn">⬅ ย้อนกลับไปหน้าเลือกกลุ่มประชากร</a>
-    </div>
 
-    <div class="container">
-        <h1>โปรแกรมคำนวณขนาดยาเด็ก (Pediatric Dose Calculator)</h1>
-        <div id="case-summary" style="margin-bottom: 20px; color: #4a5568; font-style: italic; text-align: center;"></div>
-        
-        <div id="loading" style="text-align: center; margin: 20px 0; font-weight: bold; color: #3182ce;">กำลังดึงข้อมูลยาน้ำจากฐานข้อมูล...</div>
-
-        <div id="calculator-zone" style="display:none;">
-            <div class="form-group">
-                <label for="drug-select">เลือกตัวยาปฏิชีวนะยาน้ำเชื่อม:</label>
-                <select id="drug-select" onchange="calculateDose()">
-                    <option value="">-- กรุณาเลือกยา --</option>
-                    </select>
-            </div>
-
-            <div class="form-group">
-                <label for="weight">น้ำหนักตัวเด็ก (กิโลกรัม):</label>
-                <input type="number" id="weight" placeholder="ระบุน้ำหนักเป็นกิโลกรัม" oninput="calculateDose()">
-            </div>
-
-            <div id="result-zone" class="result-box" style="display:none;">
-                <h3>ผลการคำนวณขนาดยาสำหรับผู้ประกอบวิชาชีพ:</h3>
-                <p id="calc-logic" style="margin: 10px 0; font-weight: bold;"></p>
-                <p id="final-ml" style="font-size: 20px; color: #234e52; font-weight: bold;"></p>
-                <p id="counseling" style="margin-top: 10px; font-size: 14px; color: #e53e3e;"></p>
-            </div>
+    <div class="header">
+        <a href="population.html" class="back-btn">◀ กลับ</a>
+        <h1>FAST SCREENING : PEDS DOSE</h1>
+        <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 8px;" id="disease-label"></div>
+        <div class="weight-input">
+            <label>น้ำหนัก</label>
+            <input type="number" id="weight" placeholder="0.0" inputmode="decimal">
+            <span>kg</span>
         </div>
     </div>
+
+    <div id="loading">กำลังดึงข้อมูลขนาดยาเด็ก...</div>
+
+    <div class="category-tabs" id="tabs-container" style="display: none;"></div>
+
+    <main class="container" id="cards-container"></main>
+
+    <button class="theme-toggle-btn" id="theme-toggle" aria-label="Toggle Theme">🌙</button>
 
     <script>
         const diseaseId = localStorage.getItem('selectedDiseaseId');
         const diseaseName = localStorage.getItem('selectedDiseaseName');
         const allergies = JSON.parse(localStorage.getItem('allergies') || '[]');
         
-        document.getElementById('case-summary').innerText = `เคส: ${diseaseName} | ประวัติแพ้ยา: ${allergies.length > 0 ? allergies.join(', ') : 'ไม่มี'}`;
+        if (diseaseName) {
+            document.getElementById('disease-label').innerText = `เคส: ${diseaseName}`;
+        }
 
+        const API_BASE = "https://script.google.com/macros/s/AKfycbyxvnsWIgcOp0gk0iIarnjdQOuJAynGyBpkYkZ3qAY9Lechs4dsD4nO_Ax92Yv6Nf1n/exec";
+        
+        let concData = {};
+        let drugs = [];
+        let uniqueGroups = [];
 
-        const API_URL = `https://script.google.com/macros/s/AKfycbyxvnsWIgcOp0gk0iIarnjdQOuJAynGyBpkYkZ3qAY9Lechs4dsD4nO_Ax92Yv6Nf1n/exec?disease=${diseaseId}&sheet=Ped Drugs`;
+        const state = { 
+            div: {}, 
+            conc: {}, 
+            customDose: {}, 
+            currentGroup: "" 
+        };
 
-        fetch(API_URL)
-            .then(response => response.json())
-            .then(data => {
-                document.getElementById('loading').style.display = 'none';
-                document.getElementById('calculator-zone').style.display = 'block';
-                
-                const select = document.getElementById('drug-select');
-                
-                // กรองยาที่แพ้ และกรองเฉพาะยาที่มีข้อมูลโดสเด็ก (pediatric_dose_mg_kg)
-                const filteredData = data.filter(item => {
-                    return !allergies.includes(item.drug_class) && item.pediatric_dose_mg_kg;
+        async function fetchDatabase() {
+            try {
+                // ดึงข้อมูล 2 Sheet พร้อมกันเพื่อความรวดเร็ว
+                const [resDrugs, resConc] = await Promise.all([
+                    fetch(`${API_BASE}?sheet=Ped Drugs${diseaseId ? '&disease='+diseaseId : ''}`),
+                    fetch(`${API_BASE}?sheet=Concentrations`)
+                ]);
+
+                const rawDrugs = await resDrugs.json();
+                const rawConc = await resConc.json();
+
+                // จัดรูปแบบข้อมูล ความเข้มข้น
+                rawConc.forEach(c => {
+                    if(!concData[c.drug_id]) concData[c.drug_id] = [];
+                    concData[c.drug_id].push({
+                        label: c.label,
+                        mg: parseFloat(c.mg),
+                        ml: parseFloat(c.ml)
+                    });
                 });
 
-                if(filteredData.length === 0) {
-                    select.innerHTML = '<option value="">-- ไม่พบยาน้ำที่เหมาะสม (ติดประวัติแพ้ยา หรือไม่มีรูปแบบยาน้ำ) --</option>';
-                    select.disabled = true;
-                    document.getElementById('weight').disabled = true;
+                // กรองยาที่แพ้ออก และจัดรูปแบบข้อมูลยา
+                drugs = rawDrugs.filter(d => !allergies.includes(d.drug_class)).map(d => {
+                    return {
+                        id: d.drug_id,
+                        group: d.drug_group || 'อื่นๆ',
+                        name: d.drug_name,
+                        type: d.calc_type || 'dose',
+                        dose: parseFloat(d.default_dose) || 0,
+                        hint: d.hint_text || '',
+                        age: d.age_limit || '',
+                        max: d.max_dose || '',
+                        text: d.fixed_text || '',
+                        div: d.div_values ? d.div_values.toString().split(',').map(Number) : [],
+                        divName: d.div_labels ? d.div_labels.toString().split(',') : []
+                    };
+                });
+
+                if (drugs.length === 0) {
+                    document.getElementById('loading').innerHTML = '<span style="color:var(--danger)">ไม่พบข้อมูลยาน้ำสำหรับโรคนี้ หรือติดประวัติการแพ้ยาทั้งหมด</span>';
                     return;
                 }
 
-                // นำข้อมูลยาที่ผ่านการกรองมาสร้างเป็น Dropdown
-                filteredData.forEach(item => {
-                    const option = document.createElement('option');
-                    option.value = item.drug_name;
-                    option.text = `${item.drug_name} (${item.pediatric_conc_mg_5ml} mg / 5 mL)`;
-                    // เก็บค่าที่ต้องใช้คำนวณไว้ใน attribute ของ option
-                    option.setAttribute('data-mgkg', item.pediatric_dose_mg_kg);
-                    option.setAttribute('data-conc', item.pediatric_conc_mg_5ml);
-                    option.setAttribute('data-counseling', item.counseling_points || '');
-                    select.appendChild(option);
-                });
-            })
-            .catch(err => {
-                document.getElementById('loading').innerText = "เกิดข้อผิดพลาดในการเชื่อมต่อฐานข้อมูล";
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('tabs-container').style.display = 'flex';
+                initApp();
+
+            } catch (err) {
                 console.error(err);
+                document.getElementById('loading').innerHTML = '<span style="color:var(--danger)">เกิดข้อผิดพลาดในการเชื่อมต่อฐานข้อมูล</span>';
+            }
+        }
+
+        function initApp() {
+            uniqueGroups = [...new Set(drugs.map(d => d.group))];
+            state.currentGroup = uniqueGroups[0];
+
+            drugs.forEach(d => {
+                if (d.div && d.div.length > 0) state.div[d.id] = d.div[0];
+                if (concData[d.id]) state.conc[d.id] = 0;
+                if (d.type !== 'fixed') state.customDose[d.id] = d.dose; 
             });
 
-        // ฟังก์ชันคำนวณโดส (จะทำงานเมื่อเลือกยาหรือพิมพ์น้ำหนัก)
-        function calculateDose() {
-            const select = document.getElementById('drug-select');
-            const weight = parseFloat(document.getElementById('weight').value);
+            renderTabs();
+            renderCards();
+            document.getElementById('weight').addEventListener('input', calculate);
+
+            const tabsContainer = document.getElementById('tabs-container');
+            tabsContainer.addEventListener('wheel', (evt) => {
+                evt.preventDefault();
+                tabsContainer.scrollLeft += evt.deltaY;
+            });
+        }
+
+        function renderTabs() {
+            const tabsContainer = document.getElementById('tabs-container');
+            tabsContainer.innerHTML = ''; 
             
-            if(!select.value || !weight || weight <= 0) {
-                document.getElementById('result-zone').style.display = 'none';
+            uniqueGroups.forEach(group => {
+                const btn = document.createElement('button');
+                btn.className = `tab-btn ${group === state.currentGroup ? 'active' : ''}`;
+                btn.innerText = group;
+                
+                btn.onclick = () => {
+                    state.currentGroup = group;
+                    renderTabs(); 
+                    renderCards(); 
+                    calculate(); 
+                    btn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                };
+                tabsContainer.appendChild(btn);
+            });
+        }
+
+        function renderCards() {
+            const container = document.getElementById('cards-container');
+            const currentDrugs = drugs.filter(d => d.group === state.currentGroup);
+            
+            let gridHtml = '<div class="card-grid">';
+            
+            currentDrugs.forEach(d => {
+                let controls = `<div class="controls">`;
+                
+                if (d.type !== 'fixed') {
+                    const unitLabel = d.type === 'day' ? 'mg/kg/day' : 'mg/kg/dose';
+                    controls += `
+                        <div class="dose-config">
+                            <label>Dose (${unitLabel}):</label>
+                            <input type="number" step="0.5" min="0" value="${state.customDose[d.id]}" oninput="changeDose('${d.id}', this.value)">
+                        </div>
+                    `;
+                }
+
+                if (concData[d.id] && d.type !== 'fixed') {
+                    const selectedConc = state.conc[d.id] || 0;
+                    controls += `<select id="conc-${d.id}" onchange="changeConc('${d.id}', this.value)">`;
+                    concData[d.id].forEach((c, idx) => {
+                        const isSelected = idx === selectedConc ? 'selected' : '';
+                        controls += `<option value="${idx}" ${isSelected}>${c.label}</option>`;
+                    });
+                    controls += `</select>`;
+                }
+
+                if (d.div && d.div.length > 0) {
+                    const selectedDiv = state.div[d.id] || d.div[0];
+                    controls += `<div class="freq-group">`;
+                    d.divName.forEach((name, idx) => {
+                        const isActive = d.div[idx] === selectedDiv ? 'active' : '';
+                        controls += `<button class="freq-btn ${isActive}" onclick="changeDiv(this, '${d.id}', ${d.div[idx]})">${name}</button>`;
+                    });
+                    controls += `</div>`;
+                }
+                controls += `</div>`;
+
+                let resultArea = '';
+                if (d.type === 'fixed') {
+                    resultArea = `<div class="fixed-text">${d.text || ''}</div>`;
+                } else {
+                    resultArea = `
+                        <div class="result-box">
+                            <div class="res-ml" id="ml-${d.id}">-- <span>ml</span></div>
+                            <div class="res-mg" id="mg-${d.id}">-- mg / dose</div>
+                            ${d.max ? `<div class="warning">⚠️ ${d.max}</div>` : ''}
+                        </div>
+                    `;
+                }
+
+                gridHtml += `
+                    <div class="drug-card">
+                        <div class="d-header">
+                            <div class="d-name">${d.name}</div>
+                            ${d.age ? `<div class="d-age">${d.age}</div>` : ''}
+                        </div>
+                        <div class="d-hint">${d.hint}</div>
+                        ${d.type !== 'fixed' ? controls : ''}
+                        ${resultArea}
+                    </div>
+                `;
+            });
+            
+            gridHtml += '</div>';
+            container.innerHTML = gridHtml;
+        }
+
+        // Functions for interactions
+        window.changeDiv = function(btn, id, val) {
+            const group = btn.parentElement;
+            group.querySelectorAll('.freq-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            state.div[id] = val;
+            calculate();
+        }
+
+        window.changeConc = function(id, idx) {
+            state.conc[id] = parseInt(idx);
+            calculate();
+        }
+
+        window.changeDose = function(id, val) {
+            const num = parseFloat(val);
+            state.customDose[id] = isNaN(num) || num < 0 ? 0 : num;
+            calculate();
+        }
+
+        function calculate() {
+            const w = parseFloat(document.getElementById('weight').value);
+            const currentDrugs = drugs.filter(d => d.group === state.currentGroup);
+
+            if (isNaN(w) || w <= 0) {
+                currentDrugs.forEach(d => {
+                    if (d.type !== 'fixed') {
+                        const elMl = document.getElementById(`ml-${d.id}`);
+                        const elMg = document.getElementById(`mg-${d.id}`);
+                        if(elMl) elMl.innerHTML = `-- <span>ml</span>`;
+                        if(elMg) elMg.innerText = `-- mg / dose`;
+                    }
+                });
                 return;
             }
 
-            const option = select.options[select.selectedIndex];
-            const mgKgDay = parseFloat(option.getAttribute('data-mgkg'));
-            const concentration = parseFloat(option.getAttribute('data-conc')); // mg ต่อ 5 mL
-            const counseling = option.getAttribute('data-counseling');
+            currentDrugs.forEach(d => {
+                if (d.type === 'fixed') return;
 
-            // สูตรคำนวณ: Total mg per day = น้ำหนัก * โดสที่ต้องการต่อกิโลกรัม
-            const totalMgPerDay = weight * mgKgDay;
-            // คำนวณหาจำนวน mL ต่อวัน = (Total mg * 5 mL) / ความเข้มข้นของยา
-            const totalMlPerDay = (totalMgPerDay * 5) / concentration;
+                const baseDose = state.customDose[d.id]; 
+                let mgPerDose = 0;
+                
+                if (d.type === 'day') {
+                    const divisor = state.div[d.id] || 1;
+                    mgPerDose = (baseDose * w) / divisor;
+                } else {
+                    mgPerDose = baseDose * w;
+                }
 
-            document.getElementById('result-zone').style.display = 'block';
-            document.getElementById('calc-logic').innerText = `ขนาดยาอ้างอิง: ${mgKgDay} mg/kg/day (ต้องการยารวม ${totalMgPerDay.toFixed(2)} mg/วัน)`;
-            document.getElementById('final-ml').innerText = `ปริมาณยาน้ำที่ต้องจ่ายรวมต่อวัน = ${totalMlPerDay.toFixed(2)} mL`;
-            document.getElementById('counseling').innerText = counseling ? `*คำแนะนำ: ${counseling}` : '';
+                const elMg = document.getElementById(`mg-${d.id}`);
+                const elMl = document.getElementById(`ml-${d.id}`);
+                
+                if(elMg) elMg.innerText = `${mgPerDose.toFixed(1)} mg / dose`;
+
+                if (concData[d.id]) {
+                    const cIdx = state.conc[d.id] || 0;
+                    const cData = concData[d.id][cIdx];
+                    const mlResult = (mgPerDose * cData.ml) / cData.mg;
+                    if(elMl) elMl.innerHTML = `${mlResult.toFixed(2)} <span>ml</span>`;
+                } else {
+                    if(elMl) elMl.innerHTML = `${mgPerDose.toFixed(1)} <span>mg</span>`;
+                }
+            });
         }
+
+        // Theme initialization
+        function initTheme() {
+            const toggleBtn = document.getElementById('theme-toggle');
+            const savedTheme = localStorage.getItem('theme');
+            const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            const initialTheme = savedTheme || (systemPrefersDark ? 'dark' : 'light');
+            
+            document.documentElement.setAttribute('data-theme', initialTheme);
+            toggleBtn.innerText = initialTheme === 'dark' ? '☀️' : '🌙';
+
+            toggleBtn.addEventListener('click', () => {
+                const currentTheme = document.documentElement.getAttribute('data-theme');
+                const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+                
+                document.documentElement.setAttribute('data-theme', newTheme);
+                localStorage.setItem('theme', newTheme);
+                toggleBtn.innerText = newTheme === 'dark' ? '☀️' : '🌙';
+            });
+        }
+
+        // Start Application
+        initTheme();
+        fetchDatabase();
     </script>
 </body>
 </html>
