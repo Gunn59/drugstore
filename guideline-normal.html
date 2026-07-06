@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <title>ATB Selector - แนวทางการรักษาผู้ป่วยทั่วไป</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="header-navigation">
+        <a href="population.html" class="back-btn">⬅ ย้อนกลับไปหน้าเลือกกลุ่มประชากร</a>
+    </div>
+
+    <div class="container">
+        <h1>แนวทางการรักษา (Adult Guideline)</h1>
+        <div id="case-summary" style="margin-bottom: 20px; color: #4a5568; font-style: italic;"></div>
+        
+        <h2>ยาปฏิชีวนะที่แนะนำ:</h2>
+        <div id="loading">กำลังดึงข้อมูลอัปเดตจากระบบความปลอดภัยหลังบ้าน...</div>
+        
+        <table class="guideline-table" id="result-table" style="display:none;">
+            <thead>
+                <tr>
+                    <th>ลำดับความสำคัญ</th>
+                    <th>ชื่อยาปฏิชีวนะ</th>
+                    <th>ขนาดและวิธีใช้ในผู้ใหญ่</th>
+                    <th>คำแนะนำเพิ่มเติมสำหรับการส่งมอบยา</th>
+                </tr>
+            </thead>
+            <tbody id="table-body">
+                </tbody>
+        </table>
+    </div>
+
+    <script>
+        const diseaseId = localStorage.getItem('selectedDiseaseId');
+        const diseaseName = localStorage.getItem('selectedDiseaseName');
+        const allergies = JSON.parse(localStorage.getItem('allergies') || '[]');
+        
+        document.getElementById('case-summary').innerText = `เคสผู้ป่วย: ${diseaseName} | ประวัติแพ้ยา: ${allergies.length > 0 ? allergies.join(', ') : 'ไม่มี'}`;
+
+        // นำ URL ของ Google Apps Script Web App ที่ได้จากการ Deploy มาใส่ที่นี่
+        const API_URL = `https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec?disease=${diseaseId}`;
+
+        fetch(API_URL)
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('result-table').style.display = 'table';
+                
+                const tbody = document.getElementById('table-body');
+                
+                // กรองยาที่ผู้ป่วยแพ้ออกที่ฝั่ง Frontend อีกชั้นเพื่อความปลอดภัยสูงสุด
+                const filteredData = data.filter(item => {
+                    return !allergies.includes(item.drug_class);
+                });
+
+                if(filteredData.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:red;">ไม่พบยาที่เหมาะสมในระบบเนื่องจากติดประวัติแพ้ยา กรุณาปรึกษาแพทย์ร่วมรักษา</td></tr>`;
+                    return;
+                }
+
+                filteredData.forEach(item => {
+                    const row = `<tr>
+                        <td><strong>${item.priority_type}</strong></td>
+                        <td>${item.drug_name}</td>
+                        <td>${item.adult_regimen}</td>
+                        <td>${item.counseling_points}</td>
+                    </tr>`;
+                    tbody.innerHTML += row;
+                });
+            })
+            .catch(err => {
+                document.getElementById('loading').innerText = "เกิดข้อผิดพลาดในการเชื่อมต่อฐานข้อมูลความปลอดภัย";
+                console.error(err);
+            });
+    </script>
+</body>
+</html>
