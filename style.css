@@ -1,179 +1,319 @@
-/* style.css */
+/* style.css - Modern Medical Dashboard Edition */
+@import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap');
+
 * {
     box-sizing: border-box;
-    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-family: 'Sarabun', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     margin: 0;
     padding: 0;
+    transition: all 0.2s ease;
 }
 
 body {
-    background-color: #f4f7f9;
-    color: #333;
-    display: block;
-    padding: 20px;
+    background: radial-gradient(circle at top right, #f0fdfa 0%, #e2e8f0 100%);
+    color: #1e293b;
+    min-height: 100vh;
+    padding: 30px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .container {
-    max-width: 800px;
-    margin: 60px auto 20px auto; /* เว้นด้านบนไว้ให้ไม่ทับปุ่มย้อนกลับ */
-    background: #ffffff;
-    padding: 30px;
-    border-radius: 12px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    width: 100%;
+    max-width: 900px;
+    margin: 40px auto 0 auto;
+    background: rgba(255, 255, 255, 0.95);
+    padding: 40px;
+    border-radius: 20px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.8);
 }
 
-/* Header & Back Button Zone */
+/* Header Navigation & Back Button */
 .header-navigation {
     position: absolute;
-    top: 20px;
-    left: 20px;
-    width: calc(100% - 40px);
+    top: 25px;
+    left: 25px;
 }
 
 .back-btn {
-    display: inline-block;
-    padding: 10px 18px;
-    background-color: #e0e6ed;
-    color: #4c566a;
+    display: inline-flex;
+    align-items: center;
+    padding: 10px 20px;
+    background-color: #ffffff;
+    color: #0f766e;
     text-decoration: none;
-    border-radius: 8px;
-    font-weight: bold;
+    border-radius: 30px;
+    font-weight: 600;
     font-size: 14px;
-    transition: background 0.2s;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    border: 1px solid #e2e8f0;
 }
 
 .back-btn:hover {
-    background-color: #d8dee9;
+    background-color: #0f766e;
+    color: #ffffff;
+    transform: translateX(-4px);
+    box-shadow: 0 10px 15px -3px rgba(15, 118, 110, 0.2);
 }
 
+/* Typography */
 h1 {
-    color: #2c3e50;
-    margin-bottom: 25px;
-    font-size: 24px;
+    color: #0f766e;
+    font-size: 26px;
+    font-weight: 700;
     text-align: center;
+    margin-bottom: 30px;
+    letter-spacing: -0.5px;
+    position: relative;
 }
 
 h2 {
-    color: #34495e;
-    margin-bottom: 15px;
+    color: #334155;
     font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 20px;
+    text-align: center;
 }
 
-/* Grid ของปุ่มเลือก */
+/* อัปเกรดระบบ Grid ของปุ่มเลือกโรคและกลุ่มประชากร */
 .selection-grid {
-    display: table;
+    display: block;
     width: 100%;
-    border-collapse: separate;
-    border-spacing: 15px;
 }
 
 .selection-row {
-    display: table-row;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    justify-content: center;
+    width: 100%;
 }
 
 .grid-block {
-    display: table-cell;
-    background: #f8fafc;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    min-width: 240px;
+    background: #ffffff;
     border: 2px solid #e2e8f0;
-    padding: 25px;
+    padding: 30px 20px;
     text-align: center;
-    border-radius: 10px;
+    border-radius: 16px;
     cursor: pointer;
-    font-size: 18px;
+    font-size: 16px;
     font-weight: 600;
-    color: #2d3748;
-    transition: all 0.2s;
-    width: 33.33%;
+    color: #334155;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
 }
 
 .grid-block:hover {
-    border-color: #3182ce;
-    background-color: #ebf8ff;
-    transform: translateY(-2px);
+    border-color: #14b8a6;
+    background: linear-gradient(145deg, #ffffff 0%, #f0fdfa 100%);
+    color: #0f766e;
+    transform: translateY(-5px);
+    box-shadow: 0 20px 25px -5px rgba(20, 184, 166, 0.1), 0 10px 10px -5px rgba(20, 184, 166, 0.04);
 }
 
-/* ปุ่มทั่วไป */
-.btn-submit {
-    display: block;
-    width: 100%;
-    padding: 14px;
-    background-color: #3182ce;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    font-size: 16px;
-    font-weight: bold;
-    cursor: pointer;
-    margin-top: 20px;
-}
-
-.btn-submit:hover {
-    background-color: #2b6cb0;
-}
-
-/* สองฝั่งของหน้า Preg / Lactation */
-.split-layout {
-    display: table;
-    width: 100%;
-    border-collapse: separate;
-    border-spacing: 20px;
-}
-
-.split-col {
-    display: table-cell;
-    width: 50%;
-    vertical-align: top;
+/* ส่วนของฟอร์ม (หน้าแพ้ยา / หน้าคำนวณเด็ก) */
+#allergy-form {
+    max-width: 500px;
+    margin: 0 auto;
     background: #f8fafc;
-    padding: 20px;
-    border-radius: 10px;
-    border-left: 5px solid #4299e1;
+    padding: 25px;
+    border-radius: 16px;
+    border: 1px solid #f1f5f9;
 }
 
-.split-col.lactation {
-    border-left-color: #ed64a6;
-}
-
-/* ตารางแสดง Guideline */
-.guideline-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 20px;
-}
-
-.guideline-table th, .guideline-table td {
-    border: 1px solid #e2e8f0;
-    padding: 12px;
-    text-align: left;
-}
-
-.guideline-table th {
-    background-color: #edf2f7;
-    color: #2d3748;
-}
-
-/* ฟอร์มคำนวณโดสเด็ก */
 .form-group {
-    margin-bottom: 15px;
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+}
+
+/* สไตล์ Checkbox เฉพาะหน้าแพ้ยา */
+#allergy-form .form-group {
+    flex-direction: row;
+    align-items: center;
+    background: #ffffff;
+    padding: 15px 20px;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    cursor: pointer;
+}
+
+#allergy-form .form-group:hover {
+    border-color: #cbd5e1;
+    background: #fdfdfd;
 }
 
 .form-group label {
-    display: block;
-    margin-bottom: 5px;
-    font-weight: bold;
+    font-size: 15px;
+    font-weight: 500;
+    color: #475569;
+    margin-bottom: 8px;
 }
 
-.form-group input, .form-group select {
+#allergy-form .form-group label {
+    margin-bottom: 0;
+    cursor: pointer;
+}
+
+.form-group input[type="number"], 
+.form-group select {
     width: 100%;
-    padding: 10px;
-    border: 1px solid #cbd5e0;
-    border-radius: 6px;
+    padding: 12px 16px;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    font-size: 15px;
+    background-color: #ffffff;
+    color: #334155;
 }
 
-.result-box {
+.form-group input:focus, 
+.form-group select:focus {
+    outline: none;
+    border-color: #14b8a6;
+    box-shadow: 0 0 0 4px rgba(20, 184, 166, 0.1);
+}
+
+/* ปุ่มตกลง/ถัดไป */
+.btn-submit {
+    display: block;
+    width: 100%;
+    max-width: 300px;
+    margin: 25px auto 0 auto;
+    padding: 14px;
+    background: linear-gradient(135deg, #14b8a6 0%, #0f766e 100%);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 10px 15px -3px rgba(15, 118, 110, 0.2);
+}
+
+.btn-submit:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 20px 25px -5px rgba(15, 118, 110, 0.3);
+    opacity: 0.95;
+}
+
+/* หน้าผลลัพธ์แบบสองฝั่ง (Pregnancy / Lactation) */
+.split-layout {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 25px;
+    width: 100%;
     margin-top: 20px;
-    padding: 15px;
-    background-color: #e6fffa;
-    border: 1px solid #319795;
-    border-radius: 6px;
-    color: #234e52;
+}
+
+.split-layout .selection-row {
+    display: flex;
+    width: 100%;
+    gap: 25px;
+}
+
+.split-col {
+    flex: 1;
+    min-width: 320px;
+    background: #ffffff;
+    padding: 25px;
+    border-radius: 16px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
+    border-top: 6px solid #0f766e;
+    border-left: none; /* ล้างสไตล์เก่า */
+}
+
+.split-col.lactation {
+    border-top-color: #db2777; /* สีชมพูเข้มสำหรับ Lactation */
+}
+
+.split-col h2 {
+    text-align: left;
+    font-size: 18px;
+    color: #0f766e;
+    margin-bottom: 5px;
+}
+
+.split-col.lactation h2 {
+    color: #db2777;
+}
+
+/* อัปเกรดตาราง Guideline ให้อ่านง่ายสไตล์โมเดิร์น */
+.guideline-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin-top: 15px;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid #e2e8f0;
+}
+
+.guideline-table th {
+    background-color: #f1f5f9;
+    color: #475569;
+    font-weight: 600;
+    padding: 14px 16px;
+    font-size: 14px;
+    text-align: left;
+    border-bottom: 2px solid #e2e8f0;
+}
+
+.guideline-table td {
+    padding: 16px;
+    font-size: 14px;
+    border-bottom: 1px solid #f1f5f9;
+    background-color: #ffffff;
+    color: #334155;
+    vertical-align: top;
+}
+
+.guideline-table tr:last-child td {
+    border-bottom: none;
+}
+
+.guideline-table tr:hover td {
+    background-color: #f8fafc;
+}
+
+/* กล่องแสดงผลลัพธ์การคำนวณยาเด็ก */
+.result-box {
+    margin-top: 30px;
+    padding: 25px;
+    background: linear-gradient(145deg, #f0fdf4 0%, #dcfce7 100%);
+    border: 1px solid #bbf7d0;
+    border-radius: 16px;
+    color: #14532d;
+    box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.01);
+}
+
+.result-box h3 {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 10px;
+    color: #166534;
+}
+
+#final-ml {
+    background: #ffffff;
+    display: inline-block;
+    padding: 10px 20px;
+    border-radius: 10px;
+    border-left: 5px solid #22c55e;
+    margin: 10px 0;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
+}
+
+/* ส่วนแสดงผล Loading */
+#loading {
+    color: #64748b;
+    font-size: 15px;
+    text-align: center;
+    padding: 20px;
 }

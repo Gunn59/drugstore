@@ -12,34 +12,80 @@
 
     <div class="container">
         <h1>โปรแกรมคำนวณขนาดยาเด็ก (Pediatric Dose Calculator)</h1>
+        <div id="case-summary" style="margin-bottom: 20px; color: #4a5568; font-style: italic; text-align: center;"></div>
         
-        <div class="form-group">
-            <label for="drug-select">เลือกตัวยาปฏิชีวนะยาน้ำเชื่อม (ดึงโครงสร้างโดสตามฐานข้อมูลที่กำหนดไว้):</label>
-            <select id="drug-select" onchange="updateDrugInfo()">
-                <option value="">-- กรุณาเลือกยา --</option>
-                <option value="amox_250" data-mgkg="50" data-conc="250">Amoxicillin (250 mg / 5 mL)</option>
-                <option value="amox_400" data-mgkg="50" data-conc="400">Amoxicillin (400 mg / 5 mL)</option>
-                <option value="azithro_200" data-mgkg="10" data-conc="200">Azithromycin (200 mg / 5 mL)</option>
-            </select>
-        </div>
+        <div id="loading" style="text-align: center; margin: 20px 0; font-weight: bold; color: #3182ce;">กำลังดึงข้อมูลยาน้ำจากฐานข้อมูล...</div>
 
-        <div class="form-group">
-            <label for="weight">น้ำหนักตัวเด็ก (กิโลกรัม):</label>
-            <input type="number" id="weight" placeholder="ระบุน้ำหนักเป็นกิโลกรัม" oninput="calculateDose()">
-        </div>
+        <div id="calculator-zone" style="display:none;">
+            <div class="form-group">
+                <label for="drug-select">เลือกตัวยาปฏิชีวนะยาน้ำเชื่อม:</label>
+                <select id="drug-select" onchange="calculateDose()">
+                    <option value="">-- กรุณาเลือกยา --</option>
+                    </select>
+            </div>
 
-        <div id="result-zone" class="result-box" style="display:none;">
-            <h3>ผลการคำนวณขนาดยาสำหรับผู้ประกอบวิชาชีพ:</h3>
-            <p id="calc-logic" style="margin: 10px 0; font-weight: bold;"></p>
-            <p id="final-ml" style="font-size: 20px; color: #234e52; font-weight: bold;"></p>
+            <div class="form-group">
+                <label for="weight">น้ำหนักตัวเด็ก (กิโลกรัม):</label>
+                <input type="number" id="weight" placeholder="ระบุน้ำหนักเป็นกิโลกรัม" oninput="calculateDose()">
+            </div>
+
+            <div id="result-zone" class="result-box" style="display:none;">
+                <h3>ผลการคำนวณขนาดยาสำหรับผู้ประกอบวิชาชีพ:</h3>
+                <p id="calc-logic" style="margin: 10px 0; font-weight: bold;"></p>
+                <p id="final-ml" style="font-size: 20px; color: #234e52; font-weight: bold;"></p>
+                <p id="counseling" style="margin-top: 10px; font-size: 14px; color: #e53e3e;"></p>
+            </div>
         </div>
     </div>
 
     <script>
-        function updateDrugInfo() {
-            calculateDose();
-        }
+        const diseaseId = localStorage.getItem('selectedDiseaseId');
+        const diseaseName = localStorage.getItem('selectedDiseaseName');
+        const allergies = JSON.parse(localStorage.getItem('allergies') || '[]');
+        
+        document.getElementById('case-summary').innerText = `เคส: ${diseaseName} | ประวัติแพ้ยา: ${allergies.length > 0 ? allergies.join(', ') : 'ไม่มี'}`;
 
+        // URL ดึงข้อมูลของคุณ
+        const API_URL = `https://script.google.com/macros/s/AKfycbyxvnsWIgcOp0gk0iIarnjdQOuJAynGyBpkYkZ3qAY9Lechs4dsD4nO_Ax92Yv6Nf1n/exec?disease=${diseaseId}`;
+
+        fetch(API_URL)
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('calculator-zone').style.display = 'block';
+                
+                const select = document.getElementById('drug-select');
+                
+                // กรองยาที่แพ้ และกรองเฉพาะยาที่มีข้อมูลโดสเด็ก (pediatric_dose_mg_kg)
+                const filteredData = data.filter(item => {
+                    return !allergies.includes(item.drug_class) && item.pediatric_dose_mg_kg;
+                });
+
+                if(filteredData.length === 0) {
+                    select.innerHTML = '<option value="">-- ไม่พบยาน้ำที่เหมาะสม (ติดประวัติแพ้ยา หรือไม่มีรูปแบบยาน้ำ) --</option>';
+                    select.disabled = true;
+                    document.getElementById('weight').disabled = true;
+                    return;
+                }
+
+                // นำข้อมูลยาที่ผ่านการกรองมาสร้างเป็น Dropdown
+                filteredData.forEach(item => {
+                    const option = document.createElement('option');
+                    option.value = item.drug_name;
+                    option.text = `${item.drug_name} (${item.pediatric_conc_mg_5ml} mg / 5 mL)`;
+                    // เก็บค่าที่ต้องใช้คำนวณไว้ใน attribute ของ option
+                    option.setAttribute('data-mgkg', item.pediatric_dose_mg_kg);
+                    option.setAttribute('data-conc', item.pediatric_conc_mg_5ml);
+                    option.setAttribute('data-counseling', item.counseling_points || '');
+                    select.appendChild(option);
+                });
+            })
+            .catch(err => {
+                document.getElementById('loading').innerText = "เกิดข้อผิดพลาดในการเชื่อมต่อฐานข้อมูล";
+                console.error(err);
+            });
+
+        // ฟังก์ชันคำนวณโดส (จะทำงานเมื่อเลือกยาหรือพิมพ์น้ำหนัก)
         function calculateDose() {
             const select = document.getElementById('drug-select');
             const weight = parseFloat(document.getElementById('weight').value);
@@ -52,6 +98,7 @@
             const option = select.options[select.selectedIndex];
             const mgKgDay = parseFloat(option.getAttribute('data-mgkg'));
             const concentration = parseFloat(option.getAttribute('data-conc')); // mg ต่อ 5 mL
+            const counseling = option.getAttribute('data-counseling');
 
             // สูตรคำนวณ: Total mg per day = น้ำหนัก * โดสที่ต้องการต่อกิโลกรัม
             const totalMgPerDay = weight * mgKgDay;
@@ -59,8 +106,9 @@
             const totalMlPerDay = (totalMgPerDay * 5) / concentration;
 
             document.getElementById('result-zone').style.display = 'block';
-            document.getElementById('calc-logic').innerText = `ขนาดยาอ้างอิง: ${mgKgDay} mg/kg/day (ปริมาณยารวมที่ต้องการต่อวัน: ${totalMgPerDay.toFixed(2)} mg)`;
-            document.getElementById('final-ml').innerText = `ปริมาณยาน้ำที่ต้องจ่ายรวมต่อวัน = ${totalMlPerDay.toFixed(2)} mL (แบ่งจ่ายตามความถี่ของตัวยานั้นๆ)`;
+            document.getElementById('calc-logic').innerText = `ขนาดยาอ้างอิง: ${mgKgDay} mg/kg/day (ต้องการยารวม ${totalMgPerDay.toFixed(2)} mg/วัน)`;
+            document.getElementById('final-ml').innerText = `ปริมาณยาน้ำที่ต้องจ่ายรวมต่อวัน = ${totalMlPerDay.toFixed(2)} mL`;
+            document.getElementById('counseling').innerText = counseling ? `*คำแนะนำ: ${counseling}` : '';
         }
     </script>
 </body>

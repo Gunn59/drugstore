@@ -58,9 +58,7 @@
         
         document.getElementById('case-summary').innerText = `เคสผู้ป่วย: ${diseaseName} | ประวัติแพ้ยา: ${allergies.length > 0 ? allergies.join(', ') : 'ไม่มี'}`;
 
-        // นำ URL ของ Google Apps Script Web App ที่ได้จากการ Deploy มาใส่ที่นี่ (URL เดิมที่ใช้ในหน้า normal)
-        const API_URL = `https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec?disease=${diseaseId}`;
-
+        const API_URL = `https://script.google.com/macros/s/AKfycbyxvnsWIgcOp0gk0iIarnjdQOuJAynGyBpkYkZ3qAY9Lechs4dsD4nO_Ax92Yv6Nf1n/exec?disease=${diseaseId}`;
         fetch(API_URL)
             .then(response => response.json())
             .then(data => {
