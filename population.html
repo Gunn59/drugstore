@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <title>ATB Selector - กลุ่มประชากร</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="header-navigation">
+        <a href="allergy.html" class="back-btn">⬅ ย้อนกลับไปหน้าแพ้ยา</a>
+    </div>
+
+    <div class="container">
+        <h1>เลือกกลุ่มประชากรผู้ป่วย (Special Population)</h1>
+        
+        <div class="selection-grid">
+            <div class="selection-row">
+                <div class="grid-block" onclick="route('guideline-normal.html')">1. ผู้ป่วยทั่วไป (Normal Adult)</div>
+                <div class="grid-block" onclick="route('pediatric.html')">2. ผู้ป่วยเด็ก (Pediatric Dose)</div>
+                <div class="grid-block" onclick="route('pregnancy-lactation.html')">3. สตรีมีครรภ์ / ให้นมบุตร</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function route(page) {
+            window.location.href = page;
+        }
+    </script>
+</body>
+</html>
