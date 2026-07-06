@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <title>ATB Selector - คำนวณโดสเด็ก</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="header-navigation">
+        <a href="population.html" class="back-btn">⬅ ย้อนกลับไปหน้าเลือกกลุ่มประชากร</a>
+    </div>
+
+    <div class="container">
+        <h1>โปรแกรมคำนวณขนาดยาเด็ก (Pediatric Dose Calculator)</h1>
+        
+        <div class="form-group">
+            <label for="drug-select">เลือกตัวยาปฏิชีวนะยาน้ำเชื่อม (ดึงโครงสร้างโดสตามฐานข้อมูลที่กำหนดไว้):</label>
+            <select id="drug-select" onchange="updateDrugInfo()">
+                <option value="">-- กรุณาเลือกยา --</option>
+                <option value="amox_250" data-mgkg="50" data-conc="250">Amoxicillin (250 mg / 5 mL)</option>
+                <option value="amox_400" data-mgkg="50" data-conc="400">Amoxicillin (400 mg / 5 mL)</option>
+                <option value="azithro_200" data-mgkg="10" data-conc="200">Azithromycin (200 mg / 5 mL)</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="weight">น้ำหนักตัวเด็ก (กิโลกรัม):</label>
+            <input type="number" id="weight" placeholder="ระบุน้ำหนักเป็นกิโลกรัม" oninput="calculateDose()">
+        </div>
+
+        <div id="result-zone" class="result-box" style="display:none;">
+            <h3>ผลการคำนวณขนาดยาสำหรับผู้ประกอบวิชาชีพ:</h3>
+            <p id="calc-logic" style="margin: 10px 0; font-weight: bold;"></p>
+            <p id="final-ml" style="font-size: 20px; color: #234e52; font-weight: bold;"></p>
+        </div>
+    </div>
+
+    <script>
+        function updateDrugInfo() {
+            calculateDose();
+        }
+
+        function calculateDose() {
+            const select = document.getElementById('drug-select');
+            const weight = parseFloat(document.getElementById('weight').value);
+            
+            if(!select.value || !weight || weight <= 0) {
+                document.getElementById('result-zone').style.display = 'none';
+                return;
+            }
+
+            const option = select.options[select.selectedIndex];
+            const mgKgDay = parseFloat(option.getAttribute('data-mgkg'));
+            const concentration = parseFloat(option.getAttribute('data-conc')); // mg ต่อ 5 mL
+
+            // สูตรคำนวณ: Total mg per day = น้ำหนัก * โดสที่ต้องการต่อกิโลกรัม
+            const totalMgPerDay = weight * mgKgDay;
+            // คำนวณหาจำนวน mL ต่อวัน = (Total mg * 5 mL) / ความเข้มข้นของยา
+            const totalMlPerDay = (totalMgPerDay * 5) / concentration;
+
+            document.getElementById('result-zone').style.display = 'block';
+            document.getElementById('calc-logic').innerText = `ขนาดยาอ้างอิง: ${mgKgDay} mg/kg/day (ปริมาณยารวมที่ต้องการต่อวัน: ${totalMgPerDay.toFixed(2)} mg)`;
+            document.getElementById('final-ml').innerText = `ปริมาณยาน้ำที่ต้องจ่ายรวมต่อวัน = ${totalMlPerDay.toFixed(2)} mL (แบ่งจ่ายตามความถี่ของตัวยานั้นๆ)`;
+        }
+    </script>
+</body>
+</html>
