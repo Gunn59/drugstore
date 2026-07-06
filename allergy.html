@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <title>ATB Selector - ประวัติการแพ้ยา</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="header-navigation">
+        <a href="index.html" class="back-btn">⬅ ย้อนกลับไปเลือกโรค</a>
+    </div>
+
+    <div class="container">
+        <h1 id="disease-title">โรคที่เลือก: </h1>
+        <h2>ผู้ป่วยมีประวัติแพ้ยากลุ่มใดต่อไปนี้หรือไม่?</h2>
+        
+        <form id="allergy-form">
+            <div class="form-group">
+                <input type="checkbox" id="penicillin" value="penicillin" style="width: auto; margin-right: 10px;">
+                <label style="display:inline;" for="penicillin">กลุ่ม Penicillins (เช่น Amoxicillin, Ampicillin)</label>
+            </div>
+            <div class="form-group">
+                <input type="checkbox" id="cephalosporin" value="cephalosporin" style="width: auto; margin-right: 10px;">
+                <label style="display:inline;" for="cephalosporin">กลุ่ม Cephalosporins (เช่น Cephalexin, Cefdinir)</label>
+            </div>
+            <div class="form-group">
+                <input type="checkbox" id="macrolide" value="macrolide" style="width: auto; margin-right: 10px;">
+                <label style="display:inline;" for="macrolide">กลุ่ม Macrolides (เช่น Azithromycin, Roxithromycin)</label>
+            </div>
+            
+            <button type="button" class="btn-submit" onclick="saveAllergy()">ถัดไป ➡</button>
+        </form>
+    </div>
+
+    <script>
+        document.getElementById('disease-title').innerText += " " + localStorage.getItem('selectedDiseaseName');
+
+        function saveAllergy() {
+            let allergies = [];
+            if(document.getElementById('penicillin').checked) allergies.push('penicillin');
+            if(document.getElementById('cephalosporin').checked) allergies.push('cephalosporin');
+            if(document.getElementById('macrolide').checked) allergies.push('macrolide');
+            
+            localStorage.setItem('allergies', JSON.stringify(allergies));
+            window.location.href = 'population.html';
+        }
+    </script>
+</body>
+</html>
