@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <title>ATB Selector - เลือกโรค</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>ระบบสนับสนุนการเลือกยาปฏิชีวนะ (ATB Selector)</h1>
+        <h2>กรุณาเลือกกลุ่มโรค/อาการติดเชื้อที่ตรวจวินิจฉัยแล้ว:</h2>
+        
+        <div class="selection-grid">
+            <div class="selection-row">
+                <div class="grid-block" onclick="selectDisease('pharyngitis', 'Pharyngitis/Tonsillitis')">Pharyngitis / Tonsillitis</div>
+                <div class="grid-block" onclick="selectDisease('uti', 'Uncomplicated UTI')">Uncomplicated UTI</div>
+                <div class="grid-block" onclick="selectDisease('ssti', 'Skin & Soft Tissue Infection')">Skin & Soft Tissue</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function selectDisease(id, name) {
+            // ล้างข้อมูลเก่าออกก่อนเริ่มเคสใหม่
+            localStorage.clear();
+            localStorage.setItem('selectedDiseaseId', id);
+            localStorage.setItem('selectedDiseaseName', name);
+            window.location.href = 'allergy.html';
+        }
+    </script>
+</body>
+</html>
