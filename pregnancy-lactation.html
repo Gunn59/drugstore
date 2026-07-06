@@ -10,25 +10,26 @@
         <a href="population.html" class="back-btn">⬅ ย้อนกลับไปหน้าเลือกกลุ่มประชากร</a>
     </div>
 
-    <div class="container" style="max-width: 1000px;"> <h1>แนวทางการจัดยาปฏิชีวนะในกลุ่มประชากรพิเศษเฉพาะทาง</h1>
+    <div class="container" style="max-width: 1000px;">
+        <h1>แนวทางการจัดยาปฏิชีวนะในกลุ่มประชากรพิเศษเฉพาะทาง</h1>
+        <div id="case-summary" style="margin-bottom: 20px; color: #4a5568; font-style: italic; text-align: center;"></div>
         
-        <div class="split-layout">
+        <div id="loading" style="text-align: center; margin: 20px 0; font-weight: bold; color: #3182ce;">กำลังดึงข้อมูลความปลอดภัยจากฐานข้อมูล...</div>
+
+        <div class="split-layout" id="content-zone" style="display: none;">
             <div class="selection-row">
                 <div class="split-col">
                     <h2>🤰 สตรีมีครรภ์ (Pregnancy)</h2>
-                    <p style="font-size: 14px; margin-bottom: 15px; color:#4a5568;">เน้นพิจารณากลุ่มยาตาม Pregnancy Categories ที่ปลอดภัยสูงสุด</p>
+                    <p style="font-size: 14px; margin-bottom: 15px; color:#4a5568;">พิจารณากลุ่มยาตาม Pregnancy Categories ที่ปลอดภัยสูงสุด</p>
                     <table class="guideline-table" style="font-size: 14px;">
                         <thead>
                             <tr>
                                 <th>ยาที่เลือกใช้ได้</th>
-                                <th>Category</th>
+                                <th>Category / คำแนะนำ</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            <tr><td>Amoxicillin</td><td>Cat. B (ปลอดภัยลำดับแรก)</td></tr>
-                            <tr><td>Cephalexin</td><td>Cat. B (ปลอดภัยลำดับแรก)</td></tr>
-                            <tr><td>Azithromycin</td><td>Cat. B (ใช้กรณีแพ้ Penicillin)</td></tr>
-                        </tbody>
+                        <tbody id="preg-table-body">
+                            </tbody>
                     </table>
                 </div>
 
@@ -39,18 +40,69 @@
                         <thead>
                             <tr>
                                 <th>ยาที่เลือกใช้ได้</th>
-                                <th>Lactation Risk Rating</th>
+                                <th>Risk Rating / คำแนะนำ</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            <tr><td>Amoxicillin</td><td>L1 (ปลอดภัยที่สุด / เข้ากันได้ดี)</td></tr>
-                            <tr><td>Cephalexin</td><td>L1 (ปลอดภัยที่สุด)</td></tr>
-                            <tr><td>Erythromycin</td><td>L2 (ค่อนข้างปลอดภัย)</td></tr>
-                        </tbody>
+                        <tbody id="lac-table-body">
+                            </tbody>
                     </table>
                 </div>
             </div>
         </div>
     </div>
+
+    <script>
+        const diseaseId = localStorage.getItem('selectedDiseaseId');
+        const diseaseName = localStorage.getItem('selectedDiseaseName');
+        const allergies = JSON.parse(localStorage.getItem('allergies') || '[]');
+        
+        document.getElementById('case-summary').innerText = `เคสผู้ป่วย: ${diseaseName} | ประวัติแพ้ยา: ${allergies.length > 0 ? allergies.join(', ') : 'ไม่มี'}`;
+
+        // นำ URL ของ Google Apps Script Web App ที่ได้จากการ Deploy มาใส่ที่นี่ (URL เดิมที่ใช้ในหน้า normal)
+        const API_URL = `https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec?disease=${diseaseId}`;
+
+        fetch(API_URL)
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('content-zone').style.display = 'table';
+                
+                const pregTbody = document.getElementById('preg-table-body');
+                const lacTbody = document.getElementById('lac-table-body');
+                
+                // กรองยาที่ผู้ป่วยแพ้ออกก่อนเสมอ เพื่อความปลอดภัย
+                const filteredData = data.filter(item => {
+                    return !allergies.includes(item.drug_class);
+                });
+
+                if(filteredData.length === 0) {
+                    const warningRow = `<tr><td colspan="2" style="text-align:center; color:red;">ไม่พบยาที่เหมาะสม (ติดประวัติแพ้ยา)</td></tr>`;
+                    pregTbody.innerHTML = warningRow;
+                    lacTbody.innerHTML = warningRow;
+                    return;
+                }
+
+                filteredData.forEach(item => {
+                    // สร้างแถวสำหรับตาราง Pregnancy (ต้องมีคอลัมน์ preg_category ใน Google Sheets)
+                    // ใช้ตัวดำเนินการ || เผื่อกรณีที่ใน Sheet ปล่อยช่องว่างไว้ จะได้แสดงข้อความ "-" แทน
+                    const pregRow = `<tr>
+                        <td><strong>${item.drug_name}</strong></td>
+                        <td>${item.preg_category || 'ไม่มีข้อมูลระบุ'}</td>
+                    </tr>`;
+                    pregTbody.innerHTML += pregRow;
+
+                    // สร้างแถวสำหรับตาราง Lactation (ต้องมีคอลัมน์ lactation_risk ใน Google Sheets)
+                    const lacRow = `<tr>
+                        <td><strong>${item.drug_name}</strong></td>
+                        <td>${item.lactation_risk || 'ไม่มีข้อมูลระบุ'}</td>
+                    </tr>`;
+                    lacTbody.innerHTML += lacRow;
+                });
+            })
+            .catch(err => {
+                document.getElementById('loading').innerText = "เกิดข้อผิดพลาดในการเชื่อมต่อฐานข้อมูลความปลอดภัย";
+                console.error(err);
+            });
+    </script>
 </body>
 </html>
