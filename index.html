@@ -5,18 +5,30 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Renal Dose Calculator 🩺</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; padding: 20px; max-width: 650px; margin: auto; background-color: #f0f2f5; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; padding: 20px; max-width: 700px; margin: auto; background-color: #f0f2f5; }
         .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
         h2 { text-align: center; color: #333; margin-top: 0; }
         .radio-group { margin-bottom: 20px; padding: 10px; background: #e9ecef; border-radius: 8px; }
         label { font-weight: bold; color: #555; display: block; margin-top: 10px; margin-bottom: 5px; }
-        .radio-group label { display: inline; font-weight: normal; margin-right: 15px; cursor: pointer; }
+        .radio-group label, .checkbox-item label { display: inline; font-weight: normal; cursor: pointer; margin: 0; }
         input[type="number"], input[type="text"], select { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #ccc; box-sizing: border-box; font-size: 16px; }
+        
+        /* สไตล์สำหรับกล่องเลือกยา */
+        .search-box { margin-bottom: 10px; }
+        .checkbox-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; max-height: 250px; overflow-y: auto; background: #fafafa; padding: 15px; border: 1px solid #ddd; border-radius: 8px; }
+        .checkbox-item { display: flex; align-items: center; gap: 8px; padding: 5px; border-radius: 4px; }
+        .checkbox-item:hover { background-color: #e9ecef; }
+        .checkbox-item input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; }
+        
         button { width: 100%; background-color: #0d6efd; color: white; font-weight: bold; cursor: pointer; border: none; padding: 12px; font-size: 16px; border-radius: 6px; margin-top: 20px; transition: 0.3s; }
         button:hover { background-color: #0b5ed7; }
-        #result { margin-top: 20px; padding: 15px; border-radius: 8px; display: none; }
-        .loading { text-align: center; color: #666; font-style: italic; margin-top: 15px; display: none; }
-        .error { color: #dc3545; font-weight: bold; }
+        button:disabled { background-color: #6c757d; cursor: not-allowed; }
+        
+        #result { margin-top: 20px; padding: 15px; border-radius: 8px; display: none; background-color: #e2e3e5; border: 1px solid #d6d8db; }
+        .result-card { background: white; border-radius: 8px; padding: 15px; margin-top: 15px; border-left: 5px solid #198754; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .result-card.warning { border-left-color: #ffc107; }
+        .result-card.danger { border-left-color: #dc3545; }
+        .status-text { text-align: center; color: #0d6efd; font-weight: bold; margin-bottom: 15px; }
     </style>
 </head>
 <body>
@@ -24,166 +36,175 @@
 <div class="card">
     <h2>คำนวณค่าไต & ปรับขนาดยา 🩺</h2>
     
-    <!-- ส่วนเลือกวิธีการกรอกค่าไต -->
     <div class="radio-group">
-        <label><input type="radio" name="calcType" value="calculate" checked onchange="toggleInputs()"> คำนวณ CrCl ใหม่ (Age, Wt, SCr)</label><br>
+        <label><input type="radio" name="calcType" value="calculate" checked onchange="toggleInputs()"> คำนวณ CrCl ใหม่</label><br>
         <label><input type="radio" name="calcType" value="direct" onchange="toggleInputs()"> ทราบค่า eGFR / CrCl แล้ว</label>
     </div>
 
-    <!-- กล่องคำนวณ CrCl (แสดงเป็นค่าเริ่มต้น) -->
     <div id="calcInputBox">
         <label>เพศ:</label>
-        <select id="gender">
-            <option value="M">ชาย (Male)</option>
-            <option value="F">หญิง (Female)</option>
-        </select>
-        
+        <select id="gender"><option value="M">ชาย (Male)</option><option value="F">หญิง (Female)</option></select>
         <div style="display: flex; gap: 10px;">
-            <div style="flex: 1;">
-                <label>อายุ (ปี):</label>
-                <input type="number" id="age" placeholder="เช่น 65">
-            </div>
-            <div style="flex: 1;">
-                <label>น้ำหนัก (กก.):</label>
-                <input type="number" id="weight" placeholder="เช่น 60">
-            </div>
+            <div style="flex: 1;"><label>อายุ (ปี):</label><input type="number" id="age"></div>
+            <div style="flex: 1;"><label>น้ำหนัก (กก.):</label><input type="number" id="weight"></div>
         </div>
-
-        <label>Serum Creatinine (mg/dL):</label>
-        <input type="number" id="scr" step="0.1" placeholder="เช่น 1.2">
+        <label>Serum Creatinine (mg/dL):</label><input type="number" id="scr" step="0.1">
     </div>
 
-    <!-- กล่องกรอกค่าไตตรงๆ (ซ่อนไว้ตอนแรก) -->
     <div id="directInputBox" style="display: none;">
-        <label>ระบุค่า eGFR หรือ CrCl (mL/min):</label>
-        <input type="number" id="directRenalValue" placeholder="เช่น 45">
+        <label>ระบุค่า eGFR หรือ CrCl (mL/min):</label><input type="number" id="directRenalValue">
     </div>
 
     <hr style="margin: 20px 0; border-top: 1px solid #ddd;">
 
-    <!-- ส่วนค้นหายา -->
-    <label>ชื่อยา (พิมพ์เพื่อค้นหา):</label>
-    <input type="text" id="drugInput" placeholder="เช่น amoxicillin, meropenem...">
+    <!-- ส่วนเลือกยา (อัปเกรดใหม่) -->
+    <label>เลือกยาที่ต้องการจ่าย (เลือกได้หลายตัว):</label>
+    <div id="loadingStatus" class="status-text">⏳ กำลังโหลดฐานข้อมูลยาจาก Google Sheets...</div>
+    
+    <div id="drugSelectionArea" style="display: none;">
+        <input type="text" id="searchDrug" class="search-box" placeholder="🔍 พิมพ์เพื่อกรองรายชื่อยา..." onkeyup="filterDrugs()">
+        <div id="drugListContainer" class="checkbox-grid">
+            <!-- รายชื่อยาจะถูกนำมาสร้างเป็น Checkbox ที่นี่อัตโนมัติ -->
+        </div>
+    </div>
 
-    <button onclick="processData()">ตรวจสอบขนาดยา</button>
+    <button id="calcBtn" onclick="processData()" disabled>คำนวณและตรวจสอบขนาดยา</button>
 
-    <div id="loading" class="loading">กำลังดึงข้อมูลจาก Google Sheets... ⏳</div>
     <div id="result"></div>
 </div>
 
 <script>
-    // URL ของ Google Apps Script ที่ได้มา
     const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzcCC5mimDWTiqE8sd5Fl7UZFyd95UVgyR0dtJFs-TnlVCC6Cxqt_pEzyOWzPAwU6LXxw/exec';
+    let globalDrugData = []; // ตัวแปรเก็บข้อมูลยาทั้งหมด
 
-    // ฟังก์ชันสลับหน้าจอการกรอกข้อมูล
+    // 1. โหลดข้อมูลยาทันทีที่เปิดเว็บ
+    window.onload = async function() {
+        try {
+            const response = await fetch(WEB_APP_URL);
+            globalDrugData = await response.json();
+            
+            // ดึงชื่อยาที่ไม่ซ้ำกันมาจัดเรียงตามตัวอักษร
+            const uniqueDrugs = [...new Set(globalDrugData.map(item => item.DrugName ? item.DrugName.toString().trim().toLowerCase() : ''))].filter(Boolean).sort();
+            
+            const container = document.getElementById('drugListContainer');
+            container.innerHTML = ''; // ล้างค่าเดิม
+            
+            // สร้าง Checkbox สำหรับยาทุกตัว
+            uniqueDrugs.forEach(drug => {
+                const div = document.createElement('div');
+                div.className = 'checkbox-item';
+                div.innerHTML = `
+                    <input type="checkbox" value="${drug}" id="chk_${drug}">
+                    <label for="chk_${drug}">${drug}</label>
+                `;
+                container.appendChild(div);
+            });
+
+            // เปิดให้ใช้งาน UI
+            document.getElementById('loadingStatus').style.display = 'none';
+            document.getElementById('drugSelectionArea').style.display = 'block';
+            document.getElementById('calcBtn').disabled = false;
+
+        } catch (error) {
+            document.getElementById('loadingStatus').innerHTML = '❌ ไม่สามารถดึงข้อมูลจาก Sheet ได้ โปรดรีเฟรชหน้าเว็บ';
+            document.getElementById('loadingStatus').style.color = '#dc3545';
+        }
+    };
+
+    // 2. ฟังก์ชันกรองรายชื่อยา (Search Filter)
+    function filterDrugs() {
+        const term = document.getElementById('searchDrug').value.toLowerCase();
+        const items = document.querySelectorAll('.checkbox-item');
+        items.forEach(item => {
+            const text = item.innerText.toLowerCase();
+            item.style.display = text.includes(term) ? 'flex' : 'none';
+        });
+    }
+
+    // สลับหน้าจอกรอกค่าไต
     function toggleInputs() {
         const type = document.querySelector('input[name="calcType"]:checked').value;
         document.getElementById('calcInputBox').style.display = type === 'calculate' ? 'block' : 'none';
         document.getElementById('directInputBox').style.display = type === 'direct' ? 'block' : 'none';
     }
 
-    // ฟังก์ชันหลักสำหรับประมวลผล
-    async function processData() {
+    // 3. ฟังก์ชันประมวลผลยาทั้งหมดที่เลือก
+    function processData() {
         const resultDiv = document.getElementById('result');
-        const loadingDiv = document.getElementById('loading');
-        const drugName = document.getElementById('drugInput').value.trim().toLowerCase();
         const calcType = document.querySelector('input[name="calcType"]:checked').value;
         
-        let renalFunctionValue = 0;
+        let renalValue = 0;
 
-        // 1. ตรวจสอบและคำนวณค่าไต
+        // คำนวณหรือดึงค่าไต
         if (calcType === 'calculate') {
             const age = parseFloat(document.getElementById('age').value);
             const weight = parseFloat(document.getElementById('weight').value);
             const scr = parseFloat(document.getElementById('scr').value);
             const gender = document.getElementById('gender').value;
 
-            if (!age || !weight || !scr) {
-                alert("กรุณากรอก อายุ, น้ำหนัก และ SCr ให้ครบถ้วน");
-                return;
-            }
-
-            // สูตร Cockcroft-Gault
-            renalFunctionValue = ((140 - age) * weight) / (72 * scr);
-            if (gender === 'F') {
-                renalFunctionValue *= 0.85;
-            }
+            if (!age || !weight || !scr) { alert("กรุณากรอก อายุ, น้ำหนัก และ SCr"); return; }
+            renalValue = ((140 - age) * weight) / (72 * scr);
+            if (gender === 'F') renalValue *= 0.85;
         } else {
-            renalFunctionValue = parseFloat(document.getElementById('directRenalValue').value);
-            if (!renalFunctionValue) {
-                alert("กรุณาระบุค่า eGFR หรือ CrCl");
-                return;
-            }
+            renalValue = parseFloat(document.getElementById('directRenalValue').value);
+            if (!renalValue) { alert("กรุณาระบุค่าไต"); return; }
         }
 
-        if (!drugName) {
-            alert("กรุณาพิมพ์ชื่อยาที่ต้องการตรวจสอบ");
+        // ดึงรายการยาที่ถูกติ๊กเลือก
+        const selectedCheckboxes = document.querySelectorAll('#drugListContainer input[type="checkbox"]:checked');
+        const selectedDrugs = Array.from(selectedCheckboxes).map(cb => cb.value);
+
+        if (selectedDrugs.length === 0) {
+            alert("กรุณาเลือกยาอย่างน้อย 1 ตัว");
             return;
         }
 
-        // 2. เริ่มดึงข้อมูลจาก Google Sheets
-        resultDiv.style.display = "none";
-        loadingDiv.style.display = "block";
+        // เริ่มสร้างหน้าจอแสดงผล
+        let htmlOutput = `
+            <h3 style="margin-top:0; color:#333;">✅ ผลการประมวลผล</h3>
+            <p style="font-size: 1.1em;">ค่าการทำงานของไต: <strong style="color: #0d6efd;">${renalValue.toFixed(2)} mL/min</strong></p>
+        `;
 
-        try {
-            const response = await fetch(WEB_APP_URL);
-            const data = await response.json();
+        // วนลูปเช็คยาทีละตัว
+        selectedDrugs.forEach(drugName => {
+            const drugRecords = globalDrugData.filter(item => item.DrugName && item.DrugName.toString().toLowerCase() === drugName);
             
-            // 3. กรองข้อมูลหาชื่อยาที่ตรงกัน
-            const drugRecords = data.filter(item => 
-                item.DrugName && item.DrugName.toString().toLowerCase() === drugName
-            );
-
-            loadingDiv.style.display = "none";
-            resultDiv.style.display = "block";
-
-            if (drugRecords.length === 0) {
-                resultDiv.style.backgroundColor = "#f8d7da";
-                resultDiv.style.border = "1px solid #f5c6cb";
-                resultDiv.innerHTML = `<span class="error">❌ ไม่พบข้อมูลยา "${drugName.toUpperCase()}" ในระบบฐานข้อมูล (Sheet1)</span>`;
-                return;
-            }
-
-            // 4. หาเงื่อนไขที่ค่าไตตกอยู่ในช่วง Min และ Max
             let matchedDose = null;
             for (let record of drugRecords) {
                 const min = parseFloat(record.Min_Clearance);
                 const max = parseFloat(record.Max_Clearance);
-                
-                if (renalFunctionValue >= min && renalFunctionValue <= max) {
+                if (renalValue >= min && renalValue <= max) {
                     matchedDose = record;
                     break;
                 }
             }
 
-            // 5. แสดงผลลัพธ์
             if (matchedDose) {
-                // เปลี่ยนสีพื้นหลังตามความรุนแรง (ไตเสื่อมมากสีเหลือง/ส้ม ไตปกติสีเขียว)
-                const isDoseAdjusted = renalFunctionValue < 50; 
-                resultDiv.style.backgroundColor = isDoseAdjusted ? "#fff3cd" : "#d1e7dd";
-                resultDiv.style.border = `1px solid ${isDoseAdjusted ? "#ffeeba" : "#badbcc"}`;
-                
-                resultDiv.innerHTML = `
-                    <h3 style="margin-top: 0;">✅ ผลการประมวลผล</h3>
-                    <p><strong>ค่าการทำงานของไต:</strong> <span style="font-size: 1.2em; color: #0056b3; font-weight: bold;">${renalFunctionValue.toFixed(2)} mL/min</span></p>
-                    <p><strong>ยา:</strong> ${drugName.toUpperCase()}</p>
-                    <hr>
-                    <p><strong>ขนาดยาที่แนะนำ:</strong> <br> <span style="font-size: 1.2em; color: #d32f2f; font-weight: bold;">${matchedDose.Dose || '-'}</span></p>
-                    ${matchedDose.Note ? `<p><strong>หมายเหตุ:</strong> ${matchedDose.Note}</p>` : ''}
-                    <p style="font-size: 0.85em; color: #666; margin-top: 10px;"><em>Ref: ${matchedDose.Reference || 'ไม่ระบุ'}</em></p>
+                // เปลี่ยนสีการ์ดตามเงื่อนไข (สมมติว่าถ้ามีคำว่า 'Normal' ให้ขอบสีเขียว นอกนั้นเหลือง/แดง)
+                const doseText = matchedDose.Dose.toLowerCase();
+                let cardClass = "result-card";
+                if (doseText.includes("ห้ามใช้") || doseText.includes("avoid")) cardClass += " danger";
+                else if (!doseText.includes("normal") && renalValue < 60) cardClass += " warning";
+
+                htmlOutput += `
+                    <div class="${cardClass}">
+                        <p style="margin:0 0 10px 0; font-size:1.1em;"><strong>💊 ยา:</strong> ${drugName.toUpperCase()}</p>
+                        <p style="margin:5px 0;"><strong>ขนาดยาแนะนำ:</strong> <span style="color: #d32f2f; font-weight: bold;">${matchedDose.Dose}</span></p>
+                        ${matchedDose.Note ? `<p style="margin:5px 0; color:#555;"><strong>หมายเหตุ:</strong> ${matchedDose.Note}</p>` : ''}
+                    </div>
                 `;
             } else {
-                resultDiv.style.backgroundColor = "#f8d7da";
-                resultDiv.innerHTML = `<span class="error">⚠️ พบชื่อยา แต่ไม่มีข้อมูลคำแนะนำสำหรับช่วงค่าไตนี้ กรุณาตรวจสอบตารางฐานข้อมูล</span>`;
+                htmlOutput += `
+                    <div class="result-card danger">
+                        <p style="margin:0 0 10px 0; font-size:1.1em;"><strong>💊 ยา:</strong> ${drugName.toUpperCase()}</p>
+                        <p style="margin:0; color: #dc3545;">⚠️ ไม่มีข้อมูลคำแนะนำสำหรับช่วงค่าไตนี้ในตาราง</p>
+                    </div>
+                `;
             }
+        });
 
-        } catch (error) {
-            loadingDiv.style.display = "none";
-            resultDiv.style.display = "block";
-            resultDiv.style.backgroundColor = "#f8d7da";
-            resultDiv.innerHTML = `<span class="error">❌ ขัดข้อง: ไม่สามารถดึงข้อมูลจาก Google Sheets ได้ กรุณาตรวจสอบการตั้งค่า "ทุกคนเข้าถึงได้" (Anyone) ใน Apps Script</span>`;
-            console.error(error);
-        }
+        resultDiv.innerHTML = htmlOutput;
+        resultDiv.style.display = "block";
     }
 </script>
 
