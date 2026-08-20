@@ -13,9 +13,13 @@
         .radio-group label, .checkbox-item label { display: inline; font-weight: normal; cursor: pointer; margin: 0; }
         input[type="number"], input[type="text"], select { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #ccc; box-sizing: border-box; font-size: 16px; }
         
-        /* สไตล์สำหรับกล่องเลือกยา */
-        .search-box { margin-bottom: 10px; }
-        .checkbox-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; max-height: 250px; overflow-y: auto; background: #fafafa; padding: 15px; border: 1px solid #ddd; border-radius: 8px; }
+        .search-box { margin-bottom: 15px; }
+        .drug-container { max-height: 350px; overflow-y: auto; padding-right: 10px; }
+        
+        /* สไตล์สำหรับหมวดหมู่ยา */
+        .category-section { margin-bottom: 15px; background: #fafafa; border: 1px solid #ddd; border-radius: 8px; overflow: hidden; }
+        .category-title { background: #e2e3e5; padding: 8px 15px; font-weight: bold; color: #333; margin: 0; font-size: 0.95em; border-bottom: 1px solid #ddd; }
+        .checkbox-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; padding: 12px; }
         .checkbox-item { display: flex; align-items: center; gap: 8px; padding: 5px; border-radius: 4px; }
         .checkbox-item:hover { background-color: #e9ecef; }
         .checkbox-item input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; }
@@ -57,14 +61,13 @@
 
     <hr style="margin: 20px 0; border-top: 1px solid #ddd;">
 
-    <!-- ส่วนเลือกยา (อัปเกรดใหม่) -->
     <label>เลือกยาที่ต้องการจ่าย (เลือกได้หลายตัว):</label>
-    <div id="loadingStatus" class="status-text">⏳ กำลังโหลดฐานข้อมูลยาจาก Google Sheets...</div>
+    <div id="loadingStatus" class="status-text">⏳ กำลังโหลดฐานข้อมูลยา...</div>
     
     <div id="drugSelectionArea" style="display: none;">
-        <input type="text" id="searchDrug" class="search-box" placeholder="🔍 พิมพ์เพื่อกรองรายชื่อยา..." onkeyup="filterDrugs()">
-        <div id="drugListContainer" class="checkbox-grid">
-            <!-- รายชื่อยาจะถูกนำมาสร้างเป็น Checkbox ที่นี่อัตโนมัติ -->
+        <input type="text" id="searchDrug" class="search-box" placeholder="🔍 พิมพ์เพื่อค้นหายา..." onkeyup="filterDrugs()">
+        <div id="drugListContainer" class="drug-container">
+            <!-- หมวดหมู่และรายชื่อยาจะแสดงที่นี่ -->
         </div>
     </div>
 
@@ -74,68 +77,110 @@
 </div>
 
 <script>
+    // URL Web App เดิมของคุณ
     const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzcCC5mimDWTiqE8sd5Fl7UZFyd95UVgyR0dtJFs-TnlVCC6Cxqt_pEzyOWzPAwU6LXxw/exec';
-    let globalDrugData = []; // ตัวแปรเก็บข้อมูลยาทั้งหมด
+    let globalDrugData = [];
 
-    // 1. โหลดข้อมูลยาทันทีที่เปิดเว็บ
     window.onload = async function() {
         try {
             const response = await fetch(WEB_APP_URL);
             globalDrugData = await response.json();
             
-            // ดึงชื่อยาที่ไม่ซ้ำกันมาจัดเรียงตามตัวอักษร
-            const uniqueDrugs = [...new Set(globalDrugData.map(item => item.DrugName ? item.DrugName.toString().trim().toLowerCase() : ''))].filter(Boolean).sort();
+            // 1. จัดกลุ่มยาตาม Category พร้อมตัดยาที่ชื่อซ้ำกันออก
+            const categoryMap = {};
             
-            const container = document.getElementById('drugListContainer');
-            container.innerHTML = ''; // ล้างค่าเดิม
-            
-            // สร้าง Checkbox สำหรับยาทุกตัว
-            uniqueDrugs.forEach(drug => {
-                const div = document.createElement('div');
-                div.className = 'checkbox-item';
-                div.innerHTML = `
-                    <input type="checkbox" value="${drug}" id="chk_${drug}">
-                    <label for="chk_${drug}">${drug}</label>
-                `;
-                container.appendChild(div);
+            globalDrugData.forEach(item => {
+                if (item.DrugName) {
+                    const drugName = item.DrugName.toString().trim().toLowerCase();
+                    // ถ้าใน Sheet ไม่ได้ใส่ Category ไว้ ให้จัดไปอยู่หมวด "อื่นๆ"
+                    const category = item.Category ? item.Category.toString().trim() : 'อื่นๆ (Others)';
+                    
+                    if (!categoryMap[category]) {
+                        categoryMap[category] = new Set();
+                    }
+                    categoryMap[category].add(drugName);
+                }
             });
 
-            // เปิดให้ใช้งาน UI
+            // 2. สร้าง HTML สำหรับแต่ละหมวดหมู่
+            const container = document.getElementById('drugListContainer');
+            container.innerHTML = '';
+            
+            // เรียงลำดับชื่อหมวดหมู่ตามตัวอักษร
+            Object.keys(categoryMap).sort().forEach(cat => {
+                const section = document.createElement('div');
+                section.className = 'category-section';
+                
+                // หัวข้อหมวดหมู่
+                const title = document.createElement('h4');
+                title.className = 'category-title';
+                title.innerText = cat;
+                section.appendChild(title);
+                
+                // กริดใส่ Checkbox
+                const grid = document.createElement('div');
+                grid.className = 'checkbox-grid';
+                
+                // สร้าง Checkbox เรียงตามตัวอักษร
+                Array.from(categoryMap[cat]).sort().forEach(drug => {
+                    const div = document.createElement('div');
+                    div.className = 'checkbox-item';
+                    div.innerHTML = `
+                        <input type="checkbox" value="${drug}" id="chk_${drug}">
+                        <label for="chk_${drug}">${drug}</label>
+                    `;
+                    grid.appendChild(div);
+                });
+                
+                section.appendChild(grid);
+                container.appendChild(section);
+            });
+
             document.getElementById('loadingStatus').style.display = 'none';
             document.getElementById('drugSelectionArea').style.display = 'block';
             document.getElementById('calcBtn').disabled = false;
 
         } catch (error) {
-            document.getElementById('loadingStatus').innerHTML = '❌ ไม่สามารถดึงข้อมูลจาก Sheet ได้ โปรดรีเฟรชหน้าเว็บ';
+            document.getElementById('loadingStatus').innerHTML = '❌ เชื่อมต่อ Sheet ไม่ได้ โปรดลองรันผ่าน Live Server';
             document.getElementById('loadingStatus').style.color = '#dc3545';
         }
     };
 
-    // 2. ฟังก์ชันกรองรายชื่อยา (Search Filter)
+    // 3. ฟังก์ชันค้นหา (ซ่อนยาและหมวดหมู่ที่ไม่ตรง)
     function filterDrugs() {
         const term = document.getElementById('searchDrug').value.toLowerCase();
-        const items = document.querySelectorAll('.checkbox-item');
-        items.forEach(item => {
-            const text = item.innerText.toLowerCase();
-            item.style.display = text.includes(term) ? 'flex' : 'none';
+        const sections = document.querySelectorAll('.category-section');
+        
+        sections.forEach(section => {
+            let hasVisibleItem = false;
+            const items = section.querySelectorAll('.checkbox-item');
+            
+            items.forEach(item => {
+                const text = item.innerText.toLowerCase();
+                if (text.includes(term)) {
+                    item.style.display = 'flex';
+                    hasVisibleItem = true;
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+            
+            // ถ้าหมวดหมู่นั้นไม่มียาที่ตรงกับคำค้นหาเลย ให้ซ่อนกล่องหมวดหมู่นั้นไปเลย
+            section.style.display = hasVisibleItem ? 'block' : 'none';
         });
     }
 
-    // สลับหน้าจอกรอกค่าไต
     function toggleInputs() {
         const type = document.querySelector('input[name="calcType"]:checked').value;
         document.getElementById('calcInputBox').style.display = type === 'calculate' ? 'block' : 'none';
         document.getElementById('directInputBox').style.display = type === 'direct' ? 'block' : 'none';
     }
 
-    // 3. ฟังก์ชันประมวลผลยาทั้งหมดที่เลือก
     function processData() {
         const resultDiv = document.getElementById('result');
         const calcType = document.querySelector('input[name="calcType"]:checked').value;
-        
         let renalValue = 0;
 
-        // คำนวณหรือดึงค่าไต
         if (calcType === 'calculate') {
             const age = parseFloat(document.getElementById('age').value);
             const weight = parseFloat(document.getElementById('weight').value);
@@ -150,7 +195,6 @@
             if (!renalValue) { alert("กรุณาระบุค่าไต"); return; }
         }
 
-        // ดึงรายการยาที่ถูกติ๊กเลือก
         const selectedCheckboxes = document.querySelectorAll('#drugListContainer input[type="checkbox"]:checked');
         const selectedDrugs = Array.from(selectedCheckboxes).map(cb => cb.value);
 
@@ -159,17 +203,15 @@
             return;
         }
 
-        // เริ่มสร้างหน้าจอแสดงผล
         let htmlOutput = `
             <h3 style="margin-top:0; color:#333;">✅ ผลการประมวลผล</h3>
             <p style="font-size: 1.1em;">ค่าการทำงานของไต: <strong style="color: #0d6efd;">${renalValue.toFixed(2)} mL/min</strong></p>
         `;
 
-        // วนลูปเช็คยาทีละตัว
         selectedDrugs.forEach(drugName => {
             const drugRecords = globalDrugData.filter(item => item.DrugName && item.DrugName.toString().toLowerCase() === drugName);
-            
             let matchedDose = null;
+            
             for (let record of drugRecords) {
                 const min = parseFloat(record.Min_Clearance);
                 const max = parseFloat(record.Max_Clearance);
@@ -180,8 +222,7 @@
             }
 
             if (matchedDose) {
-                // เปลี่ยนสีการ์ดตามเงื่อนไข (สมมติว่าถ้ามีคำว่า 'Normal' ให้ขอบสีเขียว นอกนั้นเหลือง/แดง)
-                const doseText = matchedDose.Dose.toLowerCase();
+                const doseText = matchedDose.Dose ? matchedDose.Dose.toLowerCase() : '';
                 let cardClass = "result-card";
                 if (doseText.includes("ห้ามใช้") || doseText.includes("avoid")) cardClass += " danger";
                 else if (!doseText.includes("normal") && renalValue < 60) cardClass += " warning";
@@ -197,7 +238,7 @@
                 htmlOutput += `
                     <div class="result-card danger">
                         <p style="margin:0 0 10px 0; font-size:1.1em;"><strong>💊 ยา:</strong> ${drugName.toUpperCase()}</p>
-                        <p style="margin:0; color: #dc3545;">⚠️ ไม่มีข้อมูลคำแนะนำสำหรับช่วงค่าไตนี้ในตาราง</p>
+                        <p style="margin:0; color: #dc3545;">⚠️ ไม่มีข้อมูลคำแนะนำสำหรับช่วงค่าไตนี้</p>
                     </div>
                 `;
             }
